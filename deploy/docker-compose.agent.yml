@@ -1,0 +1,18 @@
+# Adds the support agent service next to Langfuse. Use with the root compose file:
+#   docker compose -f docker-compose.yml -f deploy/docker-compose.agent.yml up -d --build
+services:
+  agent:
+    build: ..
+    ports:
+      - "8000:8000"
+    env_file: ../.env
+    environment:
+      # Inside the compose network Langfuse is "langfuse-web"; trace links use LANGFUSE_PUBLIC_URL.
+      LANGFUSE_HOST: http://langfuse-web:3000
+      # Ollama runs on the EC2 host, not in a container.
+      OLLAMA_HOST: http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - langfuse-web
+    restart: unless-stopped
