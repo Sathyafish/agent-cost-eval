@@ -8,7 +8,29 @@ import requests
 from agent_cost_eval.config import Settings, load_settings
 
 
+def _already_registered(settings: Settings) -> bool:
+    auth = (settings.langfuse_public_key, settings.langfuse_secret_key)
+    page = 1
+    while True:
+        resp = requests.get(
+            f"{settings.langfuse_host}/api/public/models",
+            params={"page": page, "limit": 100},
+            auth=auth,
+            timeout=15,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+        if any(m.get("modelName") == settings.ollama_model for m in payload.get("data", [])):
+            return True
+        if page >= payload.get("meta", {}).get("totalPages", 1):
+            return False
+        page += 1
+
+
 def register_model_price(settings: Settings) -> None:
+    """Register the price once; safe to re-run."""
+    if _already_registered(settings):
+        return
     body = {
         "modelName": settings.ollama_model,
         "matchPattern": f"(?i)^{re.escape(settings.ollama_model)}$",

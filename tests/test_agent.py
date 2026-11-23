@@ -19,3 +19,15 @@ def test_recursion_limit_marks_failed():
     result = run_agent(load_settings({}), question=QUESTION, llm=llm)
     assert result.failed is True
     assert result.error
+
+
+def test_usage_of_missing_metadata_warns(caplog):
+    import logging
+
+    from langchain_core.messages import AIMessage
+
+    from agent_cost_eval.agent import usage_of
+
+    with caplog.at_level(logging.WARNING):
+        assert usage_of(AIMessage(content="no usage")) == (0, 0)
+    assert "No usage metadata" in caplog.text

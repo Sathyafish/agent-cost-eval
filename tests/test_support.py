@@ -1,7 +1,7 @@
 import logging
 
 from agent_cost_eval.agent import StepUsage
-from agent_cost_eval.granular import check_payload_visible
+from agent_cost_eval.support import check_payload_visible
 
 
 def _steps(after_invoices_input: int):

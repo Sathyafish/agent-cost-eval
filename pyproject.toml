@@ -11,10 +11,12 @@ dependencies = [
   "langfuse>=3,<4",
   "python-dotenv",
   "requests",
+  "fastapi",
+  "uvicorn",
 ]
 
 [dependency-groups]
-dev = ["pytest", "responses"]
+dev = ["pytest", "responses", "httpx"]
 
 [build-system]
 requires = ["hatchling"]
