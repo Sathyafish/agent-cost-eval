@@ -5,6 +5,7 @@ description = "Coarse vs granular Langfuse tracing for the same LangGraph agent,
 requires-python = ">=3.11"
 dependencies = [
   "langchain-ollama",
+  "langchain",
   "langchain-core",
   "langgraph",
   "langfuse>=3,<4",
