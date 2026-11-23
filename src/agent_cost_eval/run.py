@@ -45,7 +45,7 @@ def main() -> int:
         status = f"FAILED ({result.error})" if result.failed else "ok"
         print(
             f"[{n}] {user_id}: {status}  in {tokens_in:,} · out {tokens_out:,}\n"
-            f"    {question}\n    trace: {settings.langfuse_host}/trace/{trace_id}"
+            f"    {question}\n    trace: {settings.langfuse_public_url}/trace/{trace_id}"
         )
     get_client().flush()
     return 1 if failed else 0

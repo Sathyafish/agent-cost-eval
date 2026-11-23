@@ -55,7 +55,7 @@ def ask(req: AskRequest) -> AskResponse:
         raise HTTPException(status_code=502, detail=result.error)
     return AskResponse(
         answer=result.answer,
-        trace_url=f"{settings.langfuse_host}/trace/{trace_id}",
+        trace_url=f"{settings.langfuse_public_url}/trace/{trace_id}",
         input_tokens=sum(s.input_tokens for s in result.steps),
         output_tokens=sum(s.output_tokens for s in result.steps),
     )

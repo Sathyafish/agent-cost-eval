@@ -1,28 +1,29 @@
 # agent-cost-eval
 
-The same LangGraph support agent, logged two ways in Langfuse, running on a local Ollama model.
+A customer support agent built with LangChain/LangGraph, running on a local Ollama model (`llama3.1:8b`) and traced in a self-hosted Langfuse, so you can see exactly where tokens and cost go.
 
-- **Agent A (coarse):** one generation for the whole run with summed tokens (for example "in 33,000 · out 410"). Tool calls appear as empty spans. You can't tell where the tokens went.
-- **Agent B (granular):** an agent span, one generation per reasoning step with its own tokens, and a span per tool call with its full output. You can see that the step after `get_invoices` is the expensive one.
+The agent answers billing questions using three mocked tools: `lookup_account`, `get_invoices` (a large payload, about 10k tokens) and `search_help_center`. Every question becomes one Langfuse trace with an agent span, one generation per reasoning step (own tokens and cost) and one span per tool call with its full output. Traces carry a `user_id` and `session_id`.
 
-Both answer "Why was I charged twice this month?" with the same model (`llama3.1:8b`, temperature 0) and mocked tools. Only the logging differs.
-
-## Run it
+## Run locally
 
 1. `ollama pull llama3.1:8b`
 2. `docker compose up -d`, open http://localhost:3000, create a project and API keys
 3. `cp .env.example .env` and fill in `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY`
-4. `uv sync && uv run python -m agent_cost_eval.pricing`
-5. `uv run python -m agent_cost_eval.compare`, then open the two printed trace URLs
+4. `uv sync && uv run python -m agent_cost_eval.pricing` (registers the token price, safe to re-run)
+5. `uv run python -m agent_cost_eval.run` (sends 5 sample questions from 3 users)
+6. Or run the API: `uv run uvicorn agent_cost_eval.service:app --port 8000`, then `POST /ask` with `{"question", "user_id", "session_id"}`
 
-Prices in `.env` are placeholders (Ollama is free). They exist so Langfuse shows dollar costs.
-The compose file is for local use: replace its `# CHANGEME` secrets before exposing it.
+To deploy on EC2, follow [deploy/EC2.md](deploy/EC2.md).
 
-## What to look for
+## Reading token cost in Langfuse
 
-- **Trace B:** the generation after `get_invoices` has by far the biggest input (about 12k tokens), and the `get_invoices` span holds the full 24-invoice output.
-- **Trace A:** only the total tokens and cost. The `?` from the slide.
-- A's total equals the sum of B's steps.
+Ollama is free, so cost comes from the per-token price registered in step 4. The placeholder prices in `.env` only make dollars appear. Menu names may differ slightly between Langfuse versions.
+
+1. **Per trace:** open **Tracing > Traces**. Each row is one customer question, with its token counts and total cost. Add the cost columns from the column picker if they're hidden.
+2. **Per step:** open one trace. The tree shows each reasoning step as a generation with its own input tokens, output tokens and cost. The step right after `get_invoices` has by far the largest input (about 12k tokens), because the invoice payload is fed back to the model. That is the cost driver. Click the `get_invoices` span to see the full output that caused it.
+3. **Per user and session:** in the traces table filter or group by User or Session. This is why each question is sent with a `user_id` and `session_id`.
+4. **Over time and by model:** open **Dashboards**. The built-in dashboard shows cost by model, tokens, and cost over time. Use it to watch totals as you send more questions.
+5. **If cost is $0 or blank:** the model price isn't registered, or the registered name doesn't match `OLLAMA_MODEL`. Re-run step 4. Under **Settings > Models** the model should list input and output prices.
 
 ## Tests
 

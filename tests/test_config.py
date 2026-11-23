@@ -22,3 +22,10 @@ def test_overrides():
     assert s.num_ctx == 8192 and isinstance(s.num_ctx, int)
     assert s.input_price_per_token == 0.000002
     assert isinstance(s.input_price_per_token, float)
+
+
+def test_public_url_defaults_to_host_and_can_differ():
+    assert load_settings({}).langfuse_public_url == "http://localhost:3000"
+    s = load_settings({"LANGFUSE_HOST": "http://langfuse-web:3000", "LANGFUSE_PUBLIC_URL": "http://1.2.3.4:3000"})
+    assert s.langfuse_host == "http://langfuse-web:3000"
+    assert s.langfuse_public_url == "http://1.2.3.4:3000"

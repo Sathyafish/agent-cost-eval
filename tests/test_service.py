@@ -40,3 +40,12 @@ def test_failed_run_returns_502(monkeypatch):
 
 def test_health():
     assert TestClient(service.app).get("/health").json() == {"status": "ok"}
+
+
+def test_trace_url_uses_public_url(monkeypatch):
+    from agent_cost_eval.config import load_settings
+
+    monkeypatch.setattr(service, "settings", load_settings({"LANGFUSE_HOST": "http://langfuse-web:3000", "LANGFUSE_PUBLIC_URL": "http://1.2.3.4:3000"}))
+    monkeypatch.setattr(service, "run_support_agent", lambda *a, **k: (OK, "abc"))
+    r = TestClient(service.app).post("/ask", json={"question": "q", "user_id": "u", "session_id": "s"})
+    assert r.json()["trace_url"] == "http://1.2.3.4:3000/trace/abc"
